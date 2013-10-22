@@ -2,7 +2,6 @@
 
 Invoker::Invoker()
 {
-    m_counter = 0;
 }
 
 Invoker::~Invoker()
@@ -22,10 +21,6 @@ void Invoker::clear()
 
 void Invoker::storeAndExecute(Command* cmd)
 {
-    if(m_counter >= 128)
-        m_counter = 0;
-
-    m_history[m_counter] = cmd;
-    ++m_counter;
+    m_history[0] = cmd;         // replace 0 by cmd->getId()
     cmd->execute();
 }

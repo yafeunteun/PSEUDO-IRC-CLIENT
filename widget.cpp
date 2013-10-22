@@ -3,8 +3,9 @@
 #include <QMessageBox>
 #include "widget.h"
 #include "ui_widget.h"
+#include "command.h"
 
-
+using namespace CMD;
 
 
 Widget::Widget(QWidget *parent) :

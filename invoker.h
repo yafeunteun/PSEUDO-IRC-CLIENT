@@ -1,6 +1,7 @@
 #ifndef INVOKER_H
 #define INVOKER_H
 
+#include <QtGlobal>
 #include <vector>
 #include "command.h"
 
@@ -13,8 +14,6 @@ public:
 
 private:
     std::vector<Command*> m_history;
-    unsigned char m_counter;
-
     void clear(void);
 };
 
