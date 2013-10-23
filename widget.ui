@@ -36,29 +36,6 @@
     </property>
    </widget>
   </widget>
-  <widget class="QScrollArea" name="scrollArea_2">
-   <property name="geometry">
-    <rect>
-     <x>159</x>
-     <y>50</y>
-     <width>741</width>
-     <height>391</height>
-    </rect>
-   </property>
-   <property name="widgetResizable">
-    <bool>true</bool>
-   </property>
-   <widget class="QWidget" name="scrollAreaWidgetContents_2">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>739</width>
-      <height>389</height>
-     </rect>
-    </property>
-   </widget>
-  </widget>
   <widget class="QTextEdit" name="textEdit">
    <property name="geometry">
     <rect>
@@ -119,6 +96,19 @@
    </property>
    <property name="text">
     <string>Topic of channel</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="textEdit_2">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>54</y>
+     <width>781</width>
+     <height>401</height>
+    </rect>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

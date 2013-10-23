@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include <QtGlobal>
+#include <QString>
 
 namespace CMD {
     enum{
@@ -28,15 +29,31 @@ namespace CMD {
 class Command
 {
 public:
-    Command() {m_id = s_counter; if(s_counter >= 128) s_counter = 0; else ++s_counter;}
-    virtual ~Command();
-    virtual void execute(void) = 0;
-    virtual void throwError(quint8);
-    quint16 getId(void) const{return m_id;}
+    // +4 : 2 bytes for command Id, 1 byte for command number, 1 byte for '\n' end char
+    Command(QString& args);
+    virtual ~Command() {}
+    virtual void execute(void);
+    virtual void throwError(quint8) = 0;
+    virtual quint16 getId(void) const{return m_id;}
+    virtual quint8 getCode(void) const{return m_code;}
+    virtual quint16 getSize(void) const{return m_size;}
 
-private:
+protected:
     static quint16 s_counter;
+    quint8 m_code;
     quint16 m_size;
     quint16 m_id;
+    QString m_args;
 };
+
+class PVMSGCommand : public Command
+{
+public:
+    PVMSGCommand(QString& args);
+    virtual void throwError(quint8);
+private:
+
+
+};
+
 #endif // COMMAND_H

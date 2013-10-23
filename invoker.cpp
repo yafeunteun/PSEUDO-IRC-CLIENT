@@ -1,4 +1,15 @@
 #include "invoker.h"
+#include "widget.h"
+
+Invoker* Invoker::s_instance = 0;
+
+Invoker* Invoker::Instance()
+{
+    if(s_instance == 0)
+        return new Invoker;
+
+    return s_instance;
+}
 
 Invoker::Invoker()
 {
@@ -21,6 +32,22 @@ void Invoker::clear()
 
 void Invoker::storeAndExecute(Command* cmd)
 {
-    m_history[0] = cmd;         // replace 0 by cmd->getId()
-    cmd->execute();
+
+    QString frame;
+    QString size;
+    QString id;
+    QString code;
+
+    m_history[cmd->getId()] = cmd;         // replace 0 by cmd->getId()
+
+    code = QString(QChar(cmd->getCode()));
+    size = QString("%u").arg(cmd->getSize(), 0);      // get a string of 2 bytes containing the command ID
+    id = QString("%u").arg(cmd->getId(), 0);      // get a string of 2 bytes containing the command ID
+
+    frame = size + id + code;
+    frame.replace(" ", "\n");
+
+    Widget* w = Widget::Instance();
+    w->getSocket()->write(frame.toUtf8());
+
 }

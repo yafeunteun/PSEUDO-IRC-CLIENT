@@ -8,11 +8,13 @@
 class Invoker
 {
 public:
-    Invoker();
+    static Invoker* Instance();
     ~Invoker();
     void storeAndExecute(Command* cmd);
 
 private:
+    Invoker();
+    static Invoker* s_instance;
     std::vector<Command*> m_history;
     void clear(void);
 };

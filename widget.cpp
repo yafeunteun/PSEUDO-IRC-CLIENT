@@ -7,6 +7,16 @@
 
 using namespace CMD;
 
+Widget* Widget::s_instance = 0;
+
+Widget* Widget::Instance()
+{
+    if(s_instance == 0)
+        s_instance = new Widget;
+
+    return s_instance;
+}
+
 
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
@@ -52,10 +62,36 @@ void Widget::initMapCmdId()
 }
 
 
+
+void Widget::displayError(const QString &error)
+{
+    QMessageBox::critical(this, "An error occured", error);
+}
+
+
+QTcpSocket* Widget::getSocket(void) const
+{
+    return m_socket;
+}
+
+
 void Widget::sendMessage(void)
 {
     QString data = ui->textEdit->toPlainText().trimmed(); // get a string containing the text typed without whitespaces caracters from the start and the end
     QLocale l;      // used to get a string from a number
+
+
+    if(data.isEmpty())
+    {
+        this->displayError(QString("You are trying to send an empty message !"));
+        return;
+    }
+
+    if(data.size() > 509)
+    {
+        this->displayError(QString("Text entry overflow, can't eval message/command !"));
+        return;
+    }
 
     if(data[0] == '/')
     {
@@ -65,25 +101,25 @@ void Widget::sendMessage(void)
 
        quint16 cmdId = getIdFromCommandName(commandName);
        if(cmdId == 0)
-           QMessageBox::critical(this, "Unknown command", "Sorry, we don't know this command ...");
+           this->displayError(QString("Sorry, we don't know this command ..."));
+
        else
        {
+
+           quint8 test_val = 5;
+           QChar t(test_val);
+           QString test(t);      // get a string of 1 bytes containing the command ID
+
            QString id = l.toString(cmdId);                  // get a string containing the value of command ID
-           QString test = QString("%u").arg(cmdId, 0);      // get a string of 2 bytes containing the command ID
+           //QString test = QString("%u").arg(cmdId, 0);      // get a string of 2 bytes containing the command ID
            QMessageBox::information(this, "test", l.toString(test.size()));     // test if the test string size is 2 bytes
            QMessageBox::information(this, "Command", "You are trying to send command : " + commandName + " : " + id); // display the command sent and the id corresponding
        }
     }
-    else{
-        if(!data.isEmpty())
-            QMessageBox::information(this, "Message", "You are trying to send a message !" + l.toString(data.size()));
-        else
-            QMessageBox::information(this, "Empty message", "You are trying to send an empty message !");
-    }
-    // test size <= 510 octets
-    if(!data.isEmpty())
+    else
     {
-        m_socket->write(data.toUtf8());
+        QMessageBox::information(this, "Message", "You are trying to send a message !" + l.toString(data.size()));
+        ui->textEdit_2->setText(ui->textEdit_2->toPlainText() + data + "\n\n");
     }
 
 }

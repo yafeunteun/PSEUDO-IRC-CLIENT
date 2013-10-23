@@ -14,11 +14,17 @@ class Widget : public QWidget
     Q_OBJECT
     
 public:
-    explicit Widget(QWidget *parent = 0);
+    static Widget* Instance();
     ~Widget();
     quint16 getIdFromCommandName(const QString &commandName);
+    void displayError(const QString& error);
+    QTcpSocket* getSocket(void) const;
     
+protected:
+    explicit Widget(QWidget *parent = 0);
+
 private:
+    static Widget* s_instance;
     std::map<QString, quint16> m_commandIdMap;
     Ui::Widget *ui;
     QTcpSocket *m_socket;
@@ -28,6 +34,7 @@ private:
 public slots:
     void sendMessage(void);
     void networkErrorHandler(QAbstractSocket::SocketError);
+
 };
 
 #endif // WIDGET_H
