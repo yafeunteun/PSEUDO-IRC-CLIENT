@@ -11,6 +11,7 @@ public:
     static Invoker* Instance();
     ~Invoker();
     void storeAndExecute(Command* cmd);
+    Command* getCommand(quint16 commandId);
 
 private:
     Invoker();

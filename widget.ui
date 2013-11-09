@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>49</y>
+     <y>60</y>
      <width>131</width>
      <height>491</height>
     </rect>
@@ -34,17 +34,22 @@
       <height>489</height>
      </rect>
     </property>
+    <widget class="QTreeWidget" name="treeWidget">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>1</y>
+       <width>131</width>
+       <height>491</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
    </widget>
-  </widget>
-  <widget class="QTextEdit" name="textEdit">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>460</y>
-     <width>621</width>
-     <height>81</height>
-    </rect>
-   </property>
   </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
@@ -102,7 +107,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>54</y>
+     <y>50</y>
      <width>781</width>
      <height>401</height>
     </rect>
@@ -111,8 +116,25 @@
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="TextEntry" name="textEdit">
+   <property name="geometry">
+    <rect>
+     <x>163</x>
+     <y>464</y>
+     <width>621</width>
+     <height>91</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>TextEntry</class>
+   <extends>QTextEdit</extends>
+   <header location="global">textentry.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

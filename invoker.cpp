@@ -1,18 +1,24 @@
 #include "invoker.h"
 #include "widget.h"
+#include "client.h"
+
+#include <iostream>
+
+using namespace std;
 
 Invoker* Invoker::s_instance = 0;
 
 Invoker* Invoker::Instance()
 {
     if(s_instance == 0)
-        return new Invoker;
+        s_instance = new Invoker;
 
     return s_instance;
 }
 
 Invoker::Invoker()
 {
+    m_history.reserve(128);
 }
 
 Invoker::~Invoker()
@@ -33,21 +39,46 @@ void Invoker::clear()
 void Invoker::storeAndExecute(Command* cmd)
 {
 
-    QString frame;
-    QString size;
-    QString id;
-    QString code;
+    quint8 _code = cmd->getCode();
+    quint16 _id = cmd->getId();
+    quint16 _size = cmd->getSize();
+    QString args(cmd->getArgs());
 
-    m_history[cmd->getId()] = cmd;         // replace 0 by cmd->getId()
+    cout <<"before replace : "<<args.size()<<endl;
+    args.replace(QChar(' '), QChar('\n'));
+    cout <<"after replace : "<<args.size()<<endl;
+    //args.resize(_size);
+    args[_size-3] = QChar('\n'); // fait déconner !
+    _size++; // we just have added \n character
 
-    code = QString(QChar(cmd->getCode()));
-    size = QString("%u").arg(cmd->getSize(), 0);      // get a string of 2 bytes containing the command ID
-    id = QString("%u").arg(cmd->getId(), 0);      // get a string of 2 bytes containing the command ID
+   // cout<<args.toStdString()<<endl;
 
-    frame = size + id + code;
-    frame.replace(" ", "\n");
+    //cout <<args.size()<<endl;
 
-    Widget* w = Widget::Instance();
-    w->getSocket()->write(frame.toUtf8());
 
+    //cout <<sizeof(_size)<<":"<< _size<<endl;
+
+
+    m_history[_id] = cmd;
+
+
+    QByteArray data((char*)&_size, 2);
+    data.append((char*)&_id, 2);
+    data.append((char*)&_code, 1);
+    data.append(args);
+
+    Client* c = Client::Instance();
+    QTcpSocket* stream = c->getSocket();
+    stream->write(data);
+
+    Widget * w = Widget::Instance();
+    w->getInputArea()->clear();
+
+    cout <<"args.size()"<<endl;
+
+}
+
+Command* Invoker::getCommand(quint16 commandId)
+{
+    return m_history[commandId];
 }

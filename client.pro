@@ -15,10 +15,18 @@ TEMPLATE = app
 SOURCES += main.cpp\
         widget.cpp \
     invoker.cpp \
-    command.cpp
+    command.cpp \
+    textentry.cpp \
+    message.cpp \
+    frame.cpp \
+    client.cpp
 
 HEADERS  += widget.h \
     invoker.h \
-    command.h
+    command.h \
+    textentry.h \
+    message.h \
+    frame.h \
+    client.h
 
 FORMS    += widget.ui

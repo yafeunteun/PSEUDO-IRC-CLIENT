@@ -4,8 +4,11 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "command.h"
-
-using namespace CMD;
+#include <QKeyEvent>
+#include "invoker.h"
+#include "message.h"
+#include "frame.h"
+#include "client.h"
 
 Widget* Widget::s_instance = 0;
 
@@ -13,6 +16,7 @@ Widget* Widget::Instance()
 {
     if(s_instance == 0)
         s_instance = new Widget;
+
 
     return s_instance;
 }
@@ -26,23 +30,35 @@ Widget::Widget(QWidget *parent) :
 
     initMapCmdId();
 
-    /*************************
-     *  Connection to server *
-     ************************/
-    QHostAddress hostname;
-    hostname.setAddress("127.0.0.1");
-    m_socket = new QTcpSocket;
-    connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(networkErrorHandler(QAbstractSocket::SocketError)));
-    m_socket->connectToHost(hostname, 3074);
+
+    m_client = Client::Instance();
+    m_client->connect("127.0.0.1", 3074);
+
+    connect(m_client->getSocket(), SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(networkErrorHandler(QAbstractSocket::SocketError)));
+
 
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(sendMessage()));
+    connect(m_client->getSocket(), SIGNAL(readyRead()), this, SLOT(onDataReceived()));
+
+    // Test on tree Widget
+
+    QObject::connect(ui->treeWidget, SIGNAL(clicked(QModelIndex)), this, SLOT(onChannelSelected(QModelIndex)));
+
+    ui->treeWidget->setHeaderLabel("CHANNELS");
+    QStringList n("toto");
+    QTreeWidgetItem *test_tree_item1 = new QTreeWidgetItem(ui->treeWidget, n);
+    ui->treeWidget->addTopLevelItem(test_tree_item1);
+
 
 }
+
 
 Widget::~Widget()
 {
     delete ui;
 }
+
+
 
 void Widget::initMapCmdId()
 {
@@ -65,19 +81,41 @@ void Widget::initMapCmdId()
 
 void Widget::displayError(const QString &error)
 {
-    QMessageBox::critical(this, "An error occured", error);
+    QMessageBox messageBox(this);
+    messageBox.setWindowTitle("An error occured");
+    messageBox.setText(error);
+    messageBox.setIcon(QMessageBox::Warning);
+    messageBox.setStandardButtons(QMessageBox::Ok);
+    messageBox.setDefaultButton(QMessageBox::Ok);
+    messageBox.setWindowState(Qt::WindowActive);
+
+    messageBox.exec();
 }
 
 
-QTcpSocket* Widget::getSocket(void) const
+
+QTextEdit* Widget::getInputArea(void) const
 {
-    return m_socket;
+    return ui->textEdit;
+}
+
+QTextEdit* Widget::getOutputArea(void) const
+{
+    return ui->textEdit_2;
+}
+
+QTreeWidget* Widget::getTree(void) const
+{
+    return ui->treeWidget;
 }
 
 
 void Widget::sendMessage(void)
 {
-    QString data = ui->textEdit->toPlainText().trimmed(); // get a string containing the text typed without whitespaces caracters from the start and the end
+
+    using namespace TOSERVER;
+
+    QString data = ui->textEdit->toPlainText().simplified(); // get a string containing the text typed without whitespaces caracters from the start and the end
     QLocale l;      // used to get a string from a number
 
 
@@ -93,58 +131,81 @@ void Widget::sendMessage(void)
         return;
     }
 
+    quint8 cmdCode;
     if(data[0] == '/')
     {
        QString commandName;
        QRegExp sep("/s | " "");
        commandName = data.mid(1).section(sep ,0, 0, QString::SectionSkipEmpty);     // get the command name without the / caracter behind
-
-       quint16 cmdId = getIdFromCommandName(commandName);
-       if(cmdId == 0)
-           this->displayError(QString("Sorry, we don't know this command ..."));
-
-       else
-       {
-
-           quint8 test_val = 5;
-           QChar t(test_val);
-           QString test(t);      // get a string of 1 bytes containing the command ID
-
-           QString id = l.toString(cmdId);                  // get a string containing the value of command ID
-           //QString test = QString("%u").arg(cmdId, 0);      // get a string of 2 bytes containing the command ID
-           QMessageBox::information(this, "test", l.toString(test.size()));     // test if the test string size is 2 bytes
-           QMessageBox::information(this, "Command", "You are trying to send command : " + commandName + " : " + id); // display the command sent and the id corresponding
-       }
+       cmdCode = getIdFromCommandName(commandName);
+       data = data.section(sep, 1);
     }
+
     else
-    {
-        QMessageBox::information(this, "Message", "You are trying to send a message !" + l.toString(data.size()));
-        ui->textEdit_2->setText(ui->textEdit_2->toPlainText() + data + "\n\n");
-    }
+        cmdCode = C_PUBMSG;
+
+    Command* c;
+
+   //std::cout<<"size of data : "<<<<std::endl;
+   switch(cmdCode)
+   {
+   case(C_PRIVMSG): c = new privmsg(data); break;
+   case(C_PUBMSG): c = new pubmsg(data); break;
+   //case(C_GWHO): c = new GWHOCommand(data); break;
+   //case(C_CWHO): c = new CWHOCommand(data); break;
+   //case(C_LIST): c = new LISTCommand(data); break;
+   //case(C_TOPIC): c = new TOPICCommand(data); break;
+   //case(C_KICK): c = new KICKCommand(data); break;
+   //case(C_BAN): c = new BANCommand(data); break;
+   //case(C_OP): c = new OPCommand(data); break;
+   //case(C_DEOP): c = new DEOPCommand(data); break;
+   case(C_JOIN): c = new join(data); break;
+   //case(C_NICK): c = new NICKCommand(data); break;
+   //case(C_LEAVE): c = new LEAVECommand(data); break;
+   //case(C_UNBAN): c = new UNBANCommand(data); break;
+   //case(C_BANLIST): c = new BANLISTCommand(data); break;
+   default: this->displayError(QString("Sorry, we don't know this command ...")); return;
+   }
+
+  // if(!c->verify())
+   //     return;
+
+   c->execute();
+        this->getInputArea()->clear();
 
 }
+
+
 
 
 
 void Widget::networkErrorHandler(QAbstractSocket::SocketError)
 {
-    QMessageBox::critical(this, "Network critical error", m_socket->errorString());
+    QMessageBox::critical(this, "Network critical error", m_client->getSocket()->errorString());
     this->close();
 }
 
 
-quint16 Widget::getIdFromCommandName(const QString &commandName)
+quint8 Widget::getIdFromCommandName(const QString &commandName)
 {
-    quint16 cmdId;
-    std::map<QString, quint16>::iterator it;
+    quint8 cmdCode;
+    std::map<QString, quint8>::iterator it;
 
     it = this->m_commandIdMap.find(commandName);
     if(it == m_commandIdMap.end())
         return 0;
 
-    cmdId = it->second;
+    cmdCode = it->second;
 
-    return cmdId;
+    return cmdCode;
 }
 
+void Widget::onChannelSelected(QModelIndex index)
+{
+    QString content;        // text of the index selected
+
+    content = QString(index.data().toByteArray());
+
+    ui->textEdit->setText(content);
+}
 
